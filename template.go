@@ -110,7 +110,7 @@ export class {{.Name}}Impl implements {{.Interface}} {
     this.fetch = fetch
   }
 
-  private url(name: string): string {
+  protected url(name: string): string {
     return this.hostname + this.path + name
   }
 
