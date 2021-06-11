@@ -102,7 +102,7 @@ export interface {{.Interface}} {
 
 export class {{.Name}}Impl implements {{.Interface}} {
   private hostname: string
-  private fetch: Fetch
+  protected fetch: Fetch
   private path = '/twirp/{{.Package}}.{{.Name}}/'
 
   constructor(hostname: string, fetch: Fetch) {
