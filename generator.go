@@ -37,7 +37,9 @@ func (f *packageFile) protoFile() *protoFile {
 	return pf
 }
 
-var packageFiles = map[string]*packageFile{}
+var (
+    packageFiles = map[string]*packageFile{}
+)
 
 func addProtoToPackage(fileName string, pf *protoFile) {
 	if _, ok := packageFiles[fileName]; !ok {
