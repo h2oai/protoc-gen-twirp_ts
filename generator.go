@@ -323,7 +323,7 @@ func singularFieldType(m *descriptor.DescriptorProto, f *descriptor.FieldDescrip
 		return f.GetTypeName()
 
 	default:
-		// log.Printf("unknown type %q in field %q", f.GetType(), f.GetName())
+		//log.Printf("unknown type %q in field %q", f.GetType(), f.GetName())
 		return "string"
 	}
 }
