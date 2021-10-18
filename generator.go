@@ -38,7 +38,7 @@ func (f *packageFile) protoFile() *protoFile {
 }
 
 var (
-	packageFiles = map[string]*packageFile{}
+    packageFiles = map[string]*packageFile{}
 )
 
 func addProtoToPackage(fileName string, pf *protoFile) {
@@ -209,8 +209,8 @@ func generate(req *plugin.CodeGeneratorRequest) (*plugin.CodeGeneratorResponse, 
 
 				v.Methods = append(v.Methods, &serviceMethodValues{
 					Name:       method.GetName(),
-					InputType:  resolver.TypeName(file, removePkg(method.GetInputType())),
-					OutputType: resolver.TypeName(file, removePkg(method.GetOutputType())),
+					InputType:  resolver.TypeName(file, method.GetInputType()),
+					OutputType: resolver.TypeName(file, method.GetOutputType()),
 				})
 			}
 
@@ -246,12 +246,6 @@ func generate(req *plugin.CodeGeneratorRequest) (*plugin.CodeGeneratorResponse, 
 
 func isRepeated(field *descriptor.FieldDescriptorProto) bool {
 	return field.Label != nil && *field.Label == descriptor.FieldDescriptorProto_LABEL_REPEATED
-}
-
-func removePkg(s string) string {
-	p := strings.SplitN(s, ".", 3)
-	c := strings.Split(p[len(p)-1], ".")
-	return strings.Join(c, "_")
 }
 
 func upperCaseFirst(s string) string {
@@ -312,29 +306,26 @@ func singularFieldType(m *descriptor.DescriptorProto, f *descriptor.FieldDescrip
 		descriptor.FieldDescriptorProto_TYPE_UINT64:
 		return "number"
 	case descriptor.FieldDescriptorProto_TYPE_ENUM:
-		return removePkg(f.GetTypeName())
+		return f.GetTypeName()
 	case descriptor.FieldDescriptorProto_TYPE_STRING:
 		return "string"
 	case descriptor.FieldDescriptorProto_TYPE_BOOL:
 		return "boolean"
 	case descriptor.FieldDescriptorProto_TYPE_MESSAGE:
-		name := f.GetTypeName()
-
 		// Google WKT Timestamp is a special case here:
 		//
 		// Currently the value will just be left as jsonpb RFC 3339 string.
 		// JSON.stringify already handles serializing Date to its RFC 3339 format.
 		//
-		if name == ".google.protobuf.Timestamp" {
+		if f.GetTypeName() == ".google.protobuf.Timestamp" {
 			return "Date"
 		}
+		return f.GetTypeName()
 
-		return removePkg(name)
 	default:
 		//log.Printf("unknown type %q in field %q", f.GetType(), f.GetName())
 		return "string"
 	}
-
 }
 
 func fieldType(f *fieldValues) string {
