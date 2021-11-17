@@ -4,7 +4,7 @@
 ## Installation
 
 ```
-go get -u github.com/horizon-games/protoc-gen-twirp_ts
+go get -u github.com/h2oai/protoc-gen-twirp_ts
 ```
 
 ## Usage

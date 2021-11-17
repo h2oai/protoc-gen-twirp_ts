@@ -3,3 +3,5 @@
 *.ts
 *.js
 node_modules
+.idea
+protoc-gen-twirp_ts
