@@ -60,7 +60,7 @@ var messageTemplate = `
 export interface {{.Interface}} {
   {{- if .Fields }}
   {{- range .Fields}}
-  {{.Field }}: {{. | fieldType}}
+  {{.Field }}?: {{. | fieldType}}
   {{- end}}
   {{end}}
 }
