@@ -60,7 +60,7 @@ var messageTemplate = `
 export interface {{.Interface}} {
   {{- if .Fields }}
   {{- range .Fields}}
-  {{.Field }}?: {{. | fieldType}}
+  {{.Field }}: {{. | fieldType}}
   {{- end}}
   {{end}}
 }
@@ -84,6 +84,7 @@ type fieldValues struct {
 	Type       string
 	IsEnum     bool
 	IsRepeated bool
+	IsOptional bool
 }
 
 type serviceValues struct {

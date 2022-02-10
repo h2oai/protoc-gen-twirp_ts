@@ -38,7 +38,7 @@ func (f *packageFile) protoFile() *protoFile {
 }
 
 var (
-    packageFiles = map[string]*packageFile{}
+	packageFiles = map[string]*packageFile{}
 )
 
 func addProtoToPackage(fileName string, pf *protoFile) {
@@ -165,6 +165,7 @@ func generate(req *plugin.CodeGeneratorRequest) (*plugin.CodeGeneratorResponse, 
 					Type:       typeName,
 					IsEnum:     field.GetType() == descriptor.FieldDescriptorProto_TYPE_ENUM,
 					IsRepeated: isRepeated(field),
+					IsOptional: isOptional(field),
 				})
 			}
 
@@ -246,6 +247,10 @@ func generate(req *plugin.CodeGeneratorRequest) (*plugin.CodeGeneratorResponse, 
 
 func isRepeated(field *descriptor.FieldDescriptorProto) bool {
 	return field.Label != nil && *field.Label == descriptor.FieldDescriptorProto_LABEL_REPEATED
+}
+
+func isOptional(field *descriptor.FieldDescriptorProto) bool {
+	return field.GetType() == descriptor.FieldDescriptorProto_TYPE_MESSAGE
 }
 
 func upperCaseFirst(s string) string {
@@ -335,6 +340,9 @@ func fieldType(f *fieldValues) string {
 	}
 	if f.IsRepeated {
 		return t + "[]"
+	}
+	if f.IsOptional {
+		t = fmt.Sprintf("%s | null", t)
 	}
 	return t
 }
