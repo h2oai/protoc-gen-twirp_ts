@@ -165,7 +165,7 @@ func generate(req *plugin.CodeGeneratorRequest) (*plugin.CodeGeneratorResponse, 
 					Type:       typeName,
 					IsEnum:     field.GetType() == descriptor.FieldDescriptorProto_TYPE_ENUM,
 					IsRepeated: isRepeated(field),
-					IsOptional: isOptional(field),
+					IsOptional: isOptional(message, field),
 				})
 			}
 
@@ -249,8 +249,8 @@ func isRepeated(field *descriptor.FieldDescriptorProto) bool {
 	return field.Label != nil && *field.Label == descriptor.FieldDescriptorProto_LABEL_REPEATED
 }
 
-func isOptional(field *descriptor.FieldDescriptorProto) bool {
-	return field.GetType() == descriptor.FieldDescriptorProto_TYPE_MESSAGE
+func isOptional(parentMessage *descriptor.DescriptorProto, field *descriptor.FieldDescriptorProto) bool {
+	return field.GetType() == descriptor.FieldDescriptorProto_TYPE_MESSAGE && !(strings.HasSuffix(parentMessage.GetName(), "Request") || strings.HasSuffix(parentMessage.GetName(), "Response"))
 }
 
 func upperCaseFirst(s string) string {
