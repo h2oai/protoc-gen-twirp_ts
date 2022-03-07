@@ -2,6 +2,7 @@ package main
 
 import (
 	plugin_go "github.com/golang/protobuf/protoc-gen-go/plugin"
+	"github.com/stretchr/testify/assert"
 	"google.golang.org/protobuf/types/descriptorpb"
 	"strings"
 	"testing"
@@ -13,13 +14,13 @@ func createCodeGeneratorRequest(file *descriptorpb.FileDescriptorProto) plugin_g
 	if file == nil {
 		return plugin_go.CodeGeneratorRequest{
 			ProtoFile: []*descriptorpb.FileDescriptorProto{
-				{Name: nil, Syntax: &syntax},
+				{Syntax: &syntax},
 			},
 		}
 	}
 	return plugin_go.CodeGeneratorRequest{
 		ProtoFile: []*descriptorpb.FileDescriptorProto{
-			{Name: nil, Syntax: &syntax, EnumType: file.EnumType, MessageType: file.MessageType},
+			{Syntax: &syntax, EnumType: file.EnumType, MessageType: file.MessageType},
 		},
 	}
 }
@@ -73,12 +74,12 @@ export enum Foo {
 					{Name: &baz, Type: &tBool}}},
 			}}),
 		want: `
+
 export interface Foo {
-	Foo: number;
-	bar: string;
-    baz: boolean;
-}
-`,
+  Foo: number;
+  bar: string;
+  baz: boolean;
+}`,
 	}} {
 		t.Run(tc.name, func(t *testing.T) {
 			ret, err := generate(&tc.req)
@@ -86,9 +87,8 @@ export interface Foo {
 				t.Fatal("Error in generation", err)
 			}
 			fileContent := getContent(t, ret)
-			if fileContent != tc.want {
-				t.Errorf("got\n%s\n\n=== want\n\n%s", fileContent, tc.want)
-			}
+
+			assert.Equal(t, tc.want, fileContent)
 		})
 	}
 }

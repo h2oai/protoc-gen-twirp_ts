@@ -60,9 +60,8 @@ var messageTemplate = `
 export interface {{.Interface}} {
   {{- if .Fields }}
   {{- range .Fields}}
-  {{.Field }}: {{. | fieldType}}
-  {{- end}}
-  {{end}}
+  {{.Field }}: {{. | fieldType}};
+  {{- end}}{{end}}
 }
 
 {{- if .NestedEnums}}
