@@ -2,6 +2,7 @@ package main
 
 import (
 	plugin_go "github.com/golang/protobuf/protoc-gen-go/plugin"
+	. "github.com/icza/gox/gox"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/protobuf/types/descriptorpb"
 	"strings"
@@ -35,13 +36,10 @@ func getContent(t *testing.T, res *plugin_go.CodeGeneratorResponse) string {
 	if !strings.HasPrefix(fileContent, fileHeader) {
 		t.Fatal("Generated file does not start with expected header")
 	}
-	return strings.TrimPrefix(fileContent, fileHeader)
+	return fileContent[len(fileHeader):]
 }
 
 func TestGenerate(t *testing.T) {
-	foo := "Foo"
-	bar := "bar"
-	baz := "baz"
 	tNumber := descriptorpb.FieldDescriptorProto_TYPE_DOUBLE
 	tString := descriptorpb.FieldDescriptorProto_TYPE_SFIXED64
 	tBool := descriptorpb.FieldDescriptorProto_TYPE_BOOL
@@ -58,37 +56,38 @@ func TestGenerate(t *testing.T) {
 		name: "An enum",
 		req: createCodeGeneratorRequest(&descriptorpb.FileDescriptorProto{
 			EnumType: []*descriptorpb.EnumDescriptorProto{
-				{Name: &foo, Value: []*descriptorpb.EnumValueDescriptorProto{{Name: &foo}}},
+				{Name: NewString("Foo"), Value: []*descriptorpb.EnumValueDescriptorProto{{Name: NewString("bar")}}},
 			}}),
 		want: `
 export enum Foo {
-  Foo = 'Foo'
+  bar = 'bar'
 }`,
 	}, {
 		name: "A message",
 		req: createCodeGeneratorRequest(&descriptorpb.FileDescriptorProto{
 			MessageType: []*descriptorpb.DescriptorProto{
-				{Name: &foo, Field: []*descriptorpb.FieldDescriptorProto{
-					{Name: &foo, Type: &tNumber},
-					{Name: &bar, Type: &tString},
-					{Name: &baz, Type: &tBool}}},
+				{Name: NewString("Foo"), Field: []*descriptorpb.FieldDescriptorProto{
+					{Name: NewString("foo"), Type: &tNumber},
+					{Name: NewString("bar"), Type: &tString},
+					{Name: NewString("baz"), Type: &tBool}}},
 			}}),
 		want: `
-
 export interface Foo {
-  Foo: number;
+  foo: number;
   bar: string;
   baz: boolean;
 }`,
 	}} {
 		t.Run(tc.name, func(t *testing.T) {
+			// clear the `packageFiles` before each test
+			packageFiles = map[string]*packageFile{}
 			ret, err := generate(&tc.req)
 			if err != nil {
 				t.Fatal("Error in generation", err)
 			}
 			fileContent := getContent(t, ret)
-
-			assert.Equal(t, tc.want, fileContent)
+			// ignore leading and trailing whitespace with TrimSpace
+			assert.Equal(t, strings.TrimSpace(tc.want), strings.TrimSpace(fileContent))
 		})
 	}
 }
