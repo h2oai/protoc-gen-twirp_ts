@@ -19,9 +19,10 @@ func createCodeGeneratorRequest(file *descriptorpb.FileDescriptorProto) plugin_g
 			},
 		}
 	}
+	file.Syntax = &syntax
 	return plugin_go.CodeGeneratorRequest{
 		ProtoFile: []*descriptorpb.FileDescriptorProto{
-			{Syntax: &syntax, EnumType: file.EnumType, MessageType: file.MessageType},
+			file,
 		},
 	}
 }
@@ -77,6 +78,23 @@ export interface Foo {
   bar: string;
   baz: boolean;
 }`,
+	}, {
+		name: "A service",
+		req: createCodeGeneratorRequest(&descriptorpb.FileDescriptorProto{
+			Service: []*descriptorpb.ServiceDescriptorProto{{
+				Name: NewString("FooService"),
+				Method: []*descriptorpb.MethodDescriptorProto{{
+					Name:       NewString("FooMethod"),
+					InputType:  NewString("FooInput"),
+					OutputType: NewString("FooOutput"),
+				}},
+			}},
+		}),
+		want: `
+export interface FooService {
+  fooMethod: (data: FooInput, headers?: object) => Promise<FooOutput>
+}
+`,
 	}} {
 		t.Run(tc.name, func(t *testing.T) {
 			// clear the `packageFiles` before each test
@@ -87,7 +105,7 @@ export interface Foo {
 			}
 			fileContent := getContent(t, ret)
 			// ignore leading and trailing whitespace with TrimSpace
-			assert.Equal(t, strings.TrimSpace(tc.want), strings.TrimSpace(fileContent))
+			assert.Contains(t, strings.TrimSpace(fileContent), strings.TrimSpace(tc.want))
 		})
 	}
 }
