@@ -37,9 +37,7 @@ func (f *packageFile) protoFile() *protoFile {
 	return pf
 }
 
-var (
-    packageFiles = map[string]*packageFile{}
-)
+var packageFiles = map[string]*packageFile{}
 
 func addProtoToPackage(fileName string, pf *protoFile) {
 	if _, ok := packageFiles[fileName]; !ok {
@@ -49,10 +47,7 @@ func addProtoToPackage(fileName string, pf *protoFile) {
 }
 
 func samePackage(a *descriptor.FileDescriptorProto, b *descriptor.FileDescriptorProto) bool {
-	if a.GetPackage() != b.GetPackage() {
-		return false
-	}
-	return true
+	return a.GetPackage() == b.GetPackage()
 }
 
 func fullTypeName(fd *descriptor.FileDescriptorProto, typeName string) string {
@@ -121,10 +116,22 @@ func generate(req *plugin.CodeGeneratorRequest) (*plugin.CodeGeneratorResponse, 
 				NestedEnums: []*enumValues{},
 			}
 
+			// Add nested types.
 			if len(message.GetNestedType()) > 0 {
-				// TODO: add support for nested messages
-				// https://developers.google.com/protocol-buffers/docs/proto#nested
-				log.Printf("warning: nested messages are not supported yet")
+				log.Printf("warning: only one level of nested messages is suported")
+			}
+			for _, nested := range message.GetNestedType() {
+				name := fmt.Sprintf("%s_%s", message.GetName(), nested.GetName())
+				v.NestedTypes = append(
+					v.NestedTypes,
+					&messageValues{
+						Name:          name,
+						Interface:     typeToInterface(name),
+						JSONInterface: typeToJSONInterface(name),
+
+						Fields: getFields(resolver, file, pfile, nested),
+					},
+				)
 			}
 
 			// Add nested enums
@@ -144,30 +151,7 @@ func generate(req *plugin.CodeGeneratorRequest) (*plugin.CodeGeneratorResponse, 
 				v.NestedEnums = append(v.NestedEnums, e)
 			}
 
-			// Add message fields
-			for _, field := range message.GetField() {
-				fp, err := resolver.Resolve(field.GetTypeName())
-				if err == nil {
-					if !samePackage(fp, file) {
-						pfile.Imports[fp.GetPackage()] = &importValues{
-							Name: importName(fp),
-							Path: importPath(file, fp.GetPackage()),
-						}
-					}
-				}
-
-				typeName := resolver.TypeName(file, singularFieldType(message, field))
-
-				v.Fields = append(v.Fields, &fieldValues{
-					Name:  field.GetName(),
-					Field: camelCase(field.GetName()),
-
-					Type:       typeName,
-					IsEnum:     field.GetType() == descriptor.FieldDescriptorProto_TYPE_ENUM,
-					IsRepeated: isRepeated(field),
-				})
-			}
-
+			v.Fields = getFields(resolver, file, pfile, message)
 			pfile.Messages = append(pfile.Messages, v)
 		}
 
@@ -242,6 +226,38 @@ func generate(req *plugin.CodeGeneratorRequest) (*plugin.CodeGeneratorResponse, 
 	}
 
 	return res, nil
+}
+
+func getFields(
+	resolver dependencyResolver,
+	file *descriptor.FileDescriptorProto,
+	pfile *protoFile,
+	message *descriptor.DescriptorProto,
+) []*fieldValues {
+	fields := make([]*fieldValues, len(message.GetField()))
+	for i, field := range message.GetField() {
+		fp, err := resolver.Resolve(field.GetTypeName())
+		if err == nil {
+			if !samePackage(fp, file) {
+				pfile.Imports[fp.GetPackage()] = &importValues{
+					Name: importName(fp),
+					Path: importPath(file, fp.GetPackage()),
+				}
+			}
+		}
+
+		typeName := resolver.TypeName(file, singularFieldType(message, field))
+
+		fields[i] = &fieldValues{
+			Name:  field.GetName(),
+			Field: camelCase(field.GetName()),
+
+			Type:       typeName,
+			IsEnum:     field.GetType() == descriptor.FieldDescriptorProto_TYPE_ENUM,
+			IsRepeated: isRepeated(field),
+		}
+	}
+	return fields
 }
 
 func isRepeated(field *descriptor.FieldDescriptorProto) bool {
@@ -323,7 +339,7 @@ func singularFieldType(m *descriptor.DescriptorProto, f *descriptor.FieldDescrip
 		return f.GetTypeName()
 
 	default:
-		//log.Printf("unknown type %q in field %q", f.GetType(), f.GetName())
+		// log.Printf("unknown type %q in field %q", f.GetType(), f.GetName())
 		return "string"
 	}
 }

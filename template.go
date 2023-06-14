@@ -69,9 +69,14 @@ export interface {{.Interface}} {
 {{range .NestedEnums}}
 {{. | compile}}
 {{end}}
-{{else}}
-
 {{ end -}}
+
+{{- if .NestedTypes}}
+{{range .NestedTypes}}
+{{. | compile}}
+{{end}}
+{{ end -}}
+
 `
 
 func (mv *messageValues) Compile() (string, error) {
