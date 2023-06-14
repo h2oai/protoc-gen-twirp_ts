@@ -37,7 +37,9 @@ func (f *packageFile) protoFile() *protoFile {
 	return pf
 }
 
-var packageFiles = map[string]*packageFile{}
+var (
+    packageFiles = map[string]*packageFile{}
+)
 
 func addProtoToPackage(fileName string, pf *protoFile) {
 	if _, ok := packageFiles[fileName]; !ok {
@@ -47,7 +49,10 @@ func addProtoToPackage(fileName string, pf *protoFile) {
 }
 
 func samePackage(a *descriptor.FileDescriptorProto, b *descriptor.FileDescriptorProto) bool {
-	return a.GetPackage() == b.GetPackage()
+	if a.GetPackage() != b.GetPackage() {
+		return false
+	}
+	return true
 }
 
 func fullTypeName(fd *descriptor.FileDescriptorProto, typeName string) string {
@@ -339,7 +344,7 @@ func singularFieldType(m *descriptor.DescriptorProto, f *descriptor.FieldDescrip
 		return f.GetTypeName()
 
 	default:
-		// log.Printf("unknown type %q in field %q", f.GetType(), f.GetName())
+		//log.Printf("unknown type %q in field %q", f.GetType(), f.GetName())
 		return "string"
 	}
 }
